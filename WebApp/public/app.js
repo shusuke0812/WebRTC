@@ -37,10 +37,68 @@ async function createRoom() {
 
   registerPeerConnectionListeners();
 
-  // Add code for creating a room here
+  // *** Creating room [start]**************************
+  const offer = await peerConnection.createOffer();
+  await peerConnection.setLocalDescription(offer);
+
+  const roomWithOffer = {
+    offer: {
+      type: offer.type,
+      sdp: offer.sdp
+    }
+  }
+  const roomRef = await db.collection('rooms').add(roomWithOffer);
+  const roomId = roomRef.id;
+  document.querySelector('#currentRoom').innerText = `Current room is ${roomId} - You are the caller !`
   
-  // Code for creating room above
+  // Firestore listen
+  roomRef.onSnapshot(async snapshot -> {
+    console.log('Got update room: ', snapshot.data());
+    const data = snapshot.data();
+    if (!peerConnection.currentRemoteDescription && data.answer) {
+      console.log('Set remote description: ', data.answer);
+      await peerConnection.setRemoteDescription(answer);
+    }
+  });
+  // *** Creating room [end]**************************
   
+  // *** Join room [start]**************************
+  const offer = roomSnapshot.data().offer;
+  await peerConnection.setRemoteDescription(offer);
+  const answer = await peerConnection.creteAnswer();
+  await peerConnection.setLocalDescription(answer);
+
+  const roomWithAnswer = {
+    answer: {
+      type: answer.type,
+      sdp: answer.sdp
+    }
+  }
+  await roomRef.update(roomWithOffer);
+  // *** Join room [end]**************************
+
+  // *** Collectiong ICE candidates [start]*******
+  async function collectIceCandidates(roomRef, peerConnection, localName, remoteName) {
+    const candidatesCollection = roomRef.collection(localName);
+
+    peerConnection.addEventListener('iceandidate', event -> {
+      if (event.candidate) {
+        const json = event.candidate.toJSON();
+        candidatesCollection.add(json);
+      }
+    });
+
+    roomRef.collection(remoteName).onSnapshot(snapshot -> {
+      snapshot.docChanges().forEach(change -> {
+        if (change.type === "added") {
+          const candidate = new RTCIceCandidate(change.doc.data());
+          peerConnection.addIceCandidate(candidate);
+        }
+      })
+    })
+  }
+  // *** Collectiong ICE candidates [end]*******
+
   localStream.getTracks().forEach(track => {
     peerConnection.addTrack(track, localStream);
   });
