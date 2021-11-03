@@ -62,6 +62,22 @@ async function createRoom() {
   });
   // *** Creating room [end]**************************
   
+  // *** Join room [start]**************************
+  const offer = roomSnapshot.data().offer;
+  await peerConnection.setRemoteDescription(offer);
+  const answer = await peerConnection.creteAnswer();
+  await peerConnection.setLocalDescription(answer);
+
+  const roomWithAnswer = {
+    answer: {
+      type: answer.type,
+      sdp: answer.sdp
+    }
+  }
+  await roomRef.update(roomWithOffer);
+  // *** Join room [end]**************************
+
+
   localStream.getTracks().forEach(track => {
     peerConnection.addTrack(track, localStream);
   });
