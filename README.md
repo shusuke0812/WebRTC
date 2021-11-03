@@ -16,4 +16,5 @@ making ....
 - Target iOS 13.0
 
 ## References
-- 
+- [Firebase WebRTC Codelab](https://webrtc.org/getting-started/firebase-rtc-codelab)
+- https://github.com/stasel/WebRTC-iOS
