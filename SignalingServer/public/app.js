@@ -56,10 +56,10 @@ async function createRoom() {
     console.log('Got update room: ', snapshot.data());
     const data = snapshot.data();
     if (!peerConnection.currentRemoteDescription && data.answer) {
-      console.log('Set remote description: ', data.answer)
+      console.log('Set remote description: ', data.answer);
       await peerConnection.setRemoteDescription(answer);
     }
-  })
+  });
   // *** Creating room [end]**************************
   
   localStream.getTracks().forEach(track => {
